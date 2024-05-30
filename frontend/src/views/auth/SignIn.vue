@@ -64,12 +64,12 @@
                     <button
                         @click.prevent="signInUser"
                         type="submit"
-                        :disabled="secondsRemainingSingIn > 1"
-                        :class="{'w-full text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center': secondsRemainingSingIn < 1, 'w-full text-white bg-gray-400 cursor-not-allowed font-medium rounded-lg text-sm px-5 py-2.5 text-center': secondsRemainingSingIn >= 1}">
+                        :disabled="signInSecondsRemaining > 1"
+                        :class="{'w-full text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center': signInSecondsRemaining < 1, 'w-full text-white bg-gray-400 cursor-not-allowed font-medium rounded-lg text-sm px-5 py-2.5 text-center': signInSecondsRemaining >= 1}">
                         Sign In
                     </button>
-                    <div v-if="secondsRemainingSingIn > 0" class="text-start text-sm mt-2 text-gray-600">
-                        <span class="font-regular">Try again in </span><span class="font-bold">{{ secondsRemainingSingIn }}</span> <span class="font-regular">seconds.</span>
+                    <div v-if="signInSecondsRemaining > 0" class="text-start text-sm mt-2 text-gray-600">
+                        <span class="font-regular">Try again in </span><span class="font-bold">{{ signInSecondsRemaining }}</span> <span class="font-regular">seconds.</span>
                     </div>  
                 </div>
                 <p><span class="font-regular">New to Project App?</span>
@@ -110,15 +110,15 @@
     const router = useRouter(); // Get the router instance
     const authStore = useAuthStore(); // Get the authentication store instance    
     const isButtonDisabled = ref(false); // A ref to manage the button disabled state in Send Code
-    const tries = computed(() => authStore.signInTries); // A ref to count tries of Sign In
-    const secondsRemainingSingIn = computed(() => authStore.secondsRemaining); // A ref to seconds countdown for try again Sign In
+    const signInTries = computed(() => authStore.signInTries); // A ref to count tries of Sign In
+    const signInSecondsRemaining = computed(() => authStore.signInSecondsRemaining); // A ref to seconds countdown for try again Sign In
 
     // Reactive form data object
     const userForm = reactive({
         email: '',
         passcode: '',
         password: '',
-        tries,
+        signInTries,
     });
 
     // Run on component mount
@@ -141,7 +141,7 @@
         
         authStore.attempsSignIn();
 
-        if (tries.value % 3 === 0) {
+        if (signInTries.value % 3 === 0) {
             showNotification("You have exceeded the maximum number of attempts. Please try again later.", "warning")
         }
 
@@ -198,7 +198,7 @@
      */
     const startTimer = () => {
         isButtonDisabled.value = true;
-        timer.value = 60;
+        timer.value = 180;
 
         const interval = setInterval(() => {
             timer.value--;

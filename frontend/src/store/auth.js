@@ -8,8 +8,8 @@ export const useAuthStore = defineStore('auth', {
     token: localStorage.getItem('token') || null, // Get the token from localStorage or set to null
     userAuth: JSON.parse(localStorage.getItem('userAuth')) || {}, // Get the user authentication details from localStorage or set to an empty object
     signInTries: localStorage.getItem('signInTries') || 0, // Get the Sign In attempts
-    secondsAcumulated: localStorage.getItem('secondsAcumulated') || 0,
-    secondsRemaining: localStorage.getItem('secondsRemaining') || 0, // Get remaining seconds only because user exceeds allowed attempts
+    signInSecondsAcumulated: localStorage.getItem('signInSecondsAcumulated') || 0,
+    signInSecondsRemaining: localStorage.getItem('signInSecondsRemaining') || 0, // Get remaining seconds only because user exceeds allowed attempts
   }),
   // Getter methods
   getters: {
@@ -56,8 +56,8 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('token');
       localStorage.removeItem('userAuth');
       localStorage.removeItem('signInTries');
-      localStorage.removeItem('secondsAcumulated');
-      localStorage.removeItem('secondsRemaining');
+      localStorage.removeItem('signInSecondsAcumulated');
+      localStorage.removeItem('signInSecondsRemaining');
     },
     /**
      * Clears the authorization header from Axios.
@@ -70,8 +70,8 @@ export const useAuthStore = defineStore('auth', {
      */
     saveToLocalStorageSignIn() {
       localStorage.setItem('signInTries', this.signInTries);
-      localStorage.setItem('secondsRemaining', this.secondsRemaining);
-      localStorage.setItem('secondsAcumulated', this.secondsAcumulated);
+      localStorage.setItem('signInSecondsRemaining', this.signInSecondsRemaining);
+      localStorage.setItem('signInSecondsAcumulated', this.signInSecondsAcumulated);
     },
      /**
      * Verficate the attemps to Sign In and incrementate the seconds for wait the next 3 attemps
@@ -85,18 +85,18 @@ export const useAuthStore = defineStore('auth', {
       if (this.signInTries % 3 === 0) {
         if (action != 'initial'){
           if (this.signInTries === 3) {
-            this.secondsRemaining = 60;
-            this.secondsAcumulated = this.secondsRemaining
+            this.signInSecondsRemaining = 60;
+            this.signInSecondsAcumulated = this.signInSecondsRemaining
           } else {
-            this.secondsAcumulated *= 2;
-            this.secondsRemaining = this.secondsAcumulated
+            this.signInSecondsAcumulated *= 2;
+            this.signInSecondsRemaining = this.signInSecondsAcumulated
           }
         }
         
         const interval = setInterval(() => {
-          this.secondsRemaining--;
+          this.signInSecondsRemaining--;
           this.saveToLocalStorageSignIn();
-          if (this.secondsRemaining <= 0) {
+          if (this.signInSecondsRemaining <= 0) {
               clearInterval(interval);
           }
       }, 1000);
