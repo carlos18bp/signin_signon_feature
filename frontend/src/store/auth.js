@@ -6,7 +6,10 @@ export const useAuthStore = defineStore('auth', {
   // State properties
   state: () => ({
     token: localStorage.getItem('token') || null, // Get the token from localStorage or set to null
-    userAuth: JSON.parse(localStorage.getItem('userAuth')) || {} // Get the user authentication details from localStorage or set to an empty object
+    userAuth: JSON.parse(localStorage.getItem('userAuth')) || {}, // Get the user authentication details from localStorage or set to an empty object
+    signInTries: localStorage.getItem('signInTries') || 0, // Get the Sign In attempts
+    secondsAcumulated: localStorage.getItem('secondsAcumulated') || 0,
+    secondsRemaining: localStorage.getItem('secondsRemaining') || 0, // Get remaining seconds only because user exceeds allowed attempts
   }),
   // Getter methods
   getters: {
@@ -25,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
         
         // Save to localStorage
-        this.saveToLocalStorage();
+        this.saveToLocalStorageAuth();
       } else {
         this.clearAuthorizationHeader();
       }
@@ -42,7 +45,7 @@ export const useAuthStore = defineStore('auth', {
     /**
      * Saves the token and user authentication details to localStorage.
      */
-    saveToLocalStorage() {
+    saveToLocalStorageAuth() {
       localStorage.setItem('token', this.token);
       localStorage.setItem('userAuth', JSON.stringify(this.userAuth));
     },
@@ -52,12 +55,53 @@ export const useAuthStore = defineStore('auth', {
     removeFromLocalStorage() {
       localStorage.removeItem('token');
       localStorage.removeItem('userAuth');
+      localStorage.removeItem('signInTries');
+      localStorage.removeItem('secondsAcumulated');
+      localStorage.removeItem('secondsRemaining');
     },
     /**
      * Clears the authorization header from Axios.
      */
     clearAuthorizationHeader() {
       delete axios.defaults.headers.common['Authorization'];
+    },
+     /**
+     * Saves the Sign In Attemps and Second Remaining to localStorage
+     */
+    saveToLocalStorageSignIn() {
+      localStorage.setItem('signInTries', this.signInTries);
+      localStorage.setItem('secondsRemaining', this.secondsRemaining);
+      localStorage.setItem('secondsAcumulated', this.secondsAcumulated);
+    },
+     /**
+     * Verficate the attemps to Sign In and incrementate the seconds for wait the next 3 attemps
+     */
+    attempsSignIn(action) {
+      if (action != 'initial'){
+        this.signInTries += 1;
+      }
+      console.log(this.signInTries)
+  
+      if (this.signInTries % 3 === 0) {
+        if (action != 'initial'){
+          if (this.signInTries === 3) {
+            this.secondsRemaining = 60;
+            this.secondsAcumulated = this.secondsRemaining
+          } else {
+            this.secondsAcumulated *= 2;
+            this.secondsRemaining = this.secondsAcumulated
+          }
+        }
+        
+        const interval = setInterval(() => {
+          this.secondsRemaining--;
+          this.saveToLocalStorageSignIn();
+          if (this.secondsRemaining <= 0) {
+              clearInterval(interval);
+          }
+      }, 1000);
+      }
+      this.saveToLocalStorageSignIn();
     }
   }
 });
