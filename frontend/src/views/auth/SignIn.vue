@@ -6,8 +6,8 @@
     </div>
     <section class="flex h-screen items-center justify-start">
         <form 
-            class="space-y-5 p-32 w-1/3">
-            <h1 class="font-bold text-center text-4xl">We welcome you again :)</h1>
+            class="space-y-5 px-32 xl:w-1/2 2xl:w-1/3">
+            <h1 class="font-bold text-center xl:text-3xl 2xl:text-4xl">We welcome you again :)</h1>
             <div>
                 <label 
                     for="email" 
@@ -18,8 +18,7 @@
                     v-model="userForm.email"
                     type="email" 
                     id="email"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    placeholder="" 
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
                     required />
             </div>
             <div>
@@ -84,16 +83,16 @@
             <div class="flex flex-col items-center justify-center text-center">
                 <div class="flex items-center w-full max-w-lg mx-4">
                     <div class="flex-grow border-t border-gray-300"></div>
-                    <span class="mx-4 text-gray-500">Or Continue with</span>
+                    <span class="mx-4 text-gray-500">Or Continue With</span>
                     <div class="flex-grow border-t border-gray-300"></div>
                 </div>
 
-                <GoogleLogin :callback="handleLoginWithGoogle" prompt/>
+                <GoogleLogin class="mt-6" :callback="handleLoginWithGoogle" prompt/>
             </div>
 
         </form>
-        <div class="h-screen w-2/3">
-            <img src="@/assets/images/signIn/signIn.jpg" alt="illustration" class=" h-full">
+        <div class="h-screen xl:w-1/2 2xl:w-2/3 overflow-hidden">
+            <img src="@/assets/images/signIn/signIn.jpg" alt="illustration" class="w-full h-full object-cover">
         </div>    
     </section>
 </template>
