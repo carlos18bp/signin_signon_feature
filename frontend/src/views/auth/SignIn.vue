@@ -1,13 +1,13 @@
 <template>
     <div class="absolute ">
         <div class="flex justify-center p-4">
-            <h2 class="font-bold text-xl">Project<br>App.</h2>
+            <h2 class="font-bold text-xl">Project<br>App</h2>
         </div>
     </div>
     <section class="flex h-screen items-center justify-start">
         <form 
             class="space-y-5 px-32 xl:w-1/2 2xl:w-1/3">
-            <h1 class="font-bold text-center xl:text-3xl 2xl:text-4xl">We welcome you again :)</h1>
+            <h1 class="font-bold text-center xl:text-3xl 2xl:text-4xl">We welcome you again</h1>
             <div>
                 <label 
                     for="email" 
@@ -117,7 +117,6 @@
         email: '',
         passcode: '',
         password: '',
-        signInTries,
     });
 
     // Run on component mount
@@ -125,8 +124,7 @@
         authStore.attempsSignIn('initial');
         if (authStore.isAuthenticated) {
             router.push({ name: 'profile' }); // Redirect to profile if already authenticated
-        }
-       
+        }       
     });
 
     /**
@@ -141,23 +139,24 @@
         authStore.attempsSignIn();
 
         if (signInTries.value % 3 === 0) {
-            showNotification("You have exceeded the maximum number of attempts. Please try again later.", "warning")
+            showNotification("You have exceeded the maximum number of attempts. Please try again later.", "warning");
+        } else {
+            try {
+                const response = await axios.post('/api/sign_in/', userForm);            
+                authStore.login(response.data); // Log in the user
+
+                showNotification("Sign In successful!", "success");
+                router.push({ name: 'profile' }); // Redirect to profile
+            } catch (error) {
+                if (error.response && error.response.status === 401) {
+                    showNotification("Invalid credentials!", "warning");
+                } else {
+                    showNotification("Sign On failed!", "error");
+                }
+            }
         }
-
-
-        try {
-            const response = await axios.post('/api/sign_in/', userForm);            
-            authStore.login(response.data); // Log in the user
-
-            showNotification("Sign In successful!", "success");
-            router.push({ name: 'profile' }); // Redirect to profile
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                showNotification("Invalid credentials!", "warning");
-            } else {
-                showNotification("Sign On failed!", "error");
-            }            
-        }
+        userForm.passcode = '';
+        userForm.password = '';
     };
 
     /**
@@ -178,16 +177,13 @@
         startTimer(); // Start the countdown timer
 
         try {
-            const response = await axios.post('/api/send_passcode/', {
-                email: userForm.email
+            await axios.post('/api/send_passcode/', {
+                email: userForm.email,
+                subject_email: 'Login code',
             });
-
-            if (response.status === 200) {
-                showNotification("Password code sent to your email", "info");                
-            } else {
-                showNotification("Error sending email", "error");
-            }
+            showNotification("Password code sent to your email", "info"); 
         } catch (error) {
+            console.error('Error when code is sent:', error);
             showNotification("User not found", "warning");
         }
     };

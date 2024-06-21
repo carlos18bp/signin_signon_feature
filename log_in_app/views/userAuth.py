@@ -1,4 +1,6 @@
+import secrets
 from rest_framework import status
+from django.core.mail import send_mail
 from log_in_app.models import User, PasswordCode
 from rest_framework.response import Response
 from log_in_app.utils import generate_auth_tokens
@@ -56,6 +58,49 @@ def sign_on(request):
     # Return validation errors
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['POST'])
+def send_verification_code(request):
+    """
+    Handle sending a sign-on passcode to the user's email.
+
+    This view processes POST requests to generate a 6-digit passcode and send it to the 
+    user's email for sign-on purposes. The passcode is also saved in the database.
+
+    Args:
+        request (Request): The HTTP request object containing the user's email.
+
+    Returns:
+        Response: A Response object with the passcode if sent successfully,
+                  or an error message if the email is already registered or if email is missing.
+    """
+    # Get the email from the request data
+    print(request.data)
+    email = request.data.get('email')
+    
+    if not email:
+        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if the user already exists based on the email
+    if User.objects.filter(email=email).exists():
+        return Response({'error': 'The email is already registered.'}, status=status.HTTP_409_CONFLICT)
+
+    # Generate a 6-digit passcode using secrets for better security
+    passcode = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+    
+    # Send an email with the passcode
+    send_mail(
+        'Sign-On Code',
+        f'Your sign-on code is: {passcode}',
+        'misfotoscmbp@gmail.com',
+        [email],
+        fail_silently=False,
+    )
+
+    # Return the passcode in the response
+    return Response({'passcode': passcode}, status=status.HTTP_200_OK)
+
+
 from django.contrib.auth import authenticate
 
 @api_view(['POST'])
@@ -106,6 +151,7 @@ def sign_in(request):
             return Response(generate_auth_tokens(user), status=status.HTTP_200_OK)
     
     return Response(error_response, status=status.HTTP_401_UNAUTHORIZED)
+
 
 from django.http import JsonResponse
 from google.oauth2 import id_token
@@ -162,6 +208,7 @@ def google_login(request):
         # Handle invalid request methods
         return JsonResponse({'status': 'error', 'error_message': 'Invalid request method'}, status=405)
 
+
 from django.contrib.auth.models import update_last_login
 
 @api_view(['POST'])
@@ -196,6 +243,7 @@ def update_profile(request):
     
     # Return validation errors
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -235,8 +283,6 @@ def update_password(request):
     # Return a success message
     return Response({'message': 'Password updated successfully'}, status=status.HTTP_200_OK)
 
-import secrets
-from django.core.mail import send_mail
 
 @api_view(['POST'])
 def send_passcode(request):
@@ -255,6 +301,7 @@ def send_passcode(request):
     """
     # Get the email from the request data
     email = request.data.get('email')
+    subject_email = request.data.get('subject_email')
     
     if not email:
         return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -273,7 +320,7 @@ def send_passcode(request):
 
     # Send an email with the passcode
     send_mail(
-        'Password Reset Code',
+        subject_email,
         f'Your password reset code is: {passcode}',
         'misfotoscmbp@gmail.com',
         [email],
@@ -282,6 +329,7 @@ def send_passcode(request):
 
     # Return a success message
     return Response({'message': 'Password code sent'}, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 def verify_passcode_and_reset_password(request):
