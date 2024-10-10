@@ -11,6 +11,7 @@ export const useAuthStore = defineStore("auth", {
     signInSecondsAcumulated:
       localStorage.getItem("signInSecondsAcumulated") || 0,
     signInSecondsRemaining: localStorage.getItem("signInSecondsRemaining") || 0, // Get remaining seconds only because user exceeds allowed attempts
+    signInIntervalId: localStorage.getItem("signInSecondsAcumulated") || null,
   }),
   // Getter methods
   getters: {
@@ -54,11 +55,25 @@ export const useAuthStore = defineStore("auth", {
      * Removes the token and user authentication details from localStorage.
      */
     removeFromLocalStorage() {
+      // Clear interval if it's running
+      if (this.signInIntervalId) {
+        clearInterval(this.signInIntervalId);
+        localStorage.setItem("signInIntervalId", null);
+        this.signInIntervalId = null;
+      }
+
+      // Clear state values
+      this.signInTries = 0;
+      this.signInSecondsAcumulated = 0;
+      this.signInSecondsRemaining = 0;
+
+      // Remove from localStorage
+
+      localStorage.setItem("signInTries", 0);
+      localStorage.setItem("signInSecondsAcumulated", 0);
+      localStorage.setItem("signInSecondsRemaining", 0);
       localStorage.removeItem("token");
       localStorage.removeItem("userAuth");
-      localStorage.removeItem("signInTries");
-      localStorage.removeItem("signInSecondsAcumulated");
-      localStorage.removeItem("signInSecondsRemaining");
     },
     /**
      * Clears the authorization header from Axios.
@@ -99,13 +114,24 @@ export const useAuthStore = defineStore("auth", {
           }
         }
 
-        const interval = setInterval(() => {
+        // Clear any previous interval
+        if (this.signInIntervalId) {
+          clearInterval(this.signInIntervalId);
+          localStorage.setItem("signInIntervalId", null);
+          this.signInIntervalId = null;
+        }
+
+        this.signInIntervalId = setInterval(() => {
           this.signInSecondsRemaining--;
           this.saveToLocalStorageSignIn();
           if (this.signInSecondsRemaining <= 0) {
-            clearInterval(interval);
+            clearInterval(this.signInIntervalId);
+            localStorage.setItem("signInIntervalId", null);
+            this.signInIntervalId = null;
           }
         }, 1000);
+
+        localStorage.setItem("signInIntervalId", this.signInIntervalId);
       }
       this.saveToLocalStorageSignIn();
     },
