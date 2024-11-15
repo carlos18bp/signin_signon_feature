@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { showNotification } from '@/shared/notification_message';
+import { decodeCredential } from 'vue3-google-login';
 
 /**
  * Handles the login process with Google.
@@ -9,10 +10,15 @@ import { showNotification } from '@/shared/notification_message';
  */
 export const loginWithGoogle = async (response, router, authStore) => {
     try {
+
+        const decodedCredential = decodeCredential(response.credential);
+
         // Send the Google credential to the backend for verification
-        const res = await axios.post('/api/google_login/', new URLSearchParams({
-            token: response.credential,
-        }));
+        const res = await axios.post('/api/google_login/',  {
+            email: decodedCredential.email,
+            given_name: decodedCredential.given_name,
+            family_name: decodedCredential.family_name,
+        });
 
         // Log in the user and save the authentication data
         authStore.login(res.data);
